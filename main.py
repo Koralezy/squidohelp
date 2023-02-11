@@ -315,8 +315,8 @@ async def setlogs(ctx):
 # https://youtu.be/R20ZOQUoKFo
 @bot.event
 async def on_message(ctx):
-  guild = bot.get_guild(1063629621528100874) # squido hq: 1063629621528100874
-  category = bot.get_channel(1073806548394065920) # remember to change these !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  guild = bot.get_guild(1063629621528100874)
+  category = bot.get_channel(1073832558900547635)
   admin_role = discord.utils.get(guild.roles, name='Modmail License Certified')
   if ctx.author == bot.user:
     return
