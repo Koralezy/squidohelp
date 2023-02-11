@@ -315,8 +315,8 @@ async def setlogs(ctx):
 # https://youtu.be/R20ZOQUoKFo
 @bot.event
 async def on_message(ctx):
-  guild = bot.get_guild(964988502880190544) # squido hq: 1063629621528100874
-  category = bot.get_channel(1073806548394065920) # remember to change these !!!!!
+  guild = bot.get_guild(1063629621528100874) # squido hq: 1063629621528100874
+  category = bot.get_channel(1073806548394065920) # remember to change these !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   admin_role = discord.utils.get(guild.roles, name='Modmail License Certified')
   if ctx.author == bot.user:
     return
@@ -363,7 +363,7 @@ async def on_message(ctx):
         modmail_channel = await guild.create_text_channel(f"ticket-{ctx.author.name}", overwrites=overwrites, category=category)
 
         cursor.execute("INSERT INTO modmail VALUES (? , ?)", (ctx.author.id, modmail_channel.id, ))
-        db.commit
+        db.commit()
         
         embed = discord.Embed(title="New Modmail Ticket", color = discord.Color.green(), timestamp=datetime.now(), description=ctx.content)
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
@@ -397,7 +397,8 @@ async def on_message(ctx):
 
               await user.send(embed=close_embed)
               channel = ctx.channel
-              await channel.delete()
+              await channel.set_permissions(admin_role, send_messages=False)
+              await channel.edit(name=f"closed-{user.name}")
               cursor.execute("DELETE FROM modmail WHERE channel_id = (?),", (channel.id, ))
               db.commit()
               return
