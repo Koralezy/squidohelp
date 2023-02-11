@@ -397,6 +397,7 @@ async def on_message(ctx):
 
               await user.send(embed=close_embed)
               channel = ctx.channel
+              await channel.send(f"***Ticket Closed by {ctx.author.name}***")
               await channel.set_permissions(admin_role, send_messages=False)
               await channel.edit(name=f"closed-{user.name}")
               newcatg = bot.get_channel(1074113413707468830)
