@@ -399,6 +399,8 @@ async def on_message(ctx):
               channel = ctx.channel
               await channel.set_permissions(admin_role, send_messages=False)
               await channel.edit(name=f"closed-{user.name}")
+              newcatg = bot.get_channel(1074113413707468830)
+              await channel.move(category=newcatg)
               cursor.execute("DELETE FROM modmail WHERE channel_id = (?),", (channel.id, ))
               db.commit()
               return
