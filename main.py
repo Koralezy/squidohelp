@@ -8,6 +8,7 @@ import time
 from datetime import datetime, timedelta
 import json
 import sqlite3
+import asyncio
 #import ffmpeg (for music cmds)
 
 bot = discord.Bot(intents=discord.Intents.all())
@@ -313,8 +314,8 @@ async def setlogs(ctx):
 # -------------------- Modmail --------------------
 
 # https://youtu.be/R20ZOQUoKFo
-@bot.event
-async def on_message(ctx):
+@bot.listen('on_message')
+async def modmail(ctx):
   guild = bot.get_guild(1063629621528100874)
   category = bot.get_channel(1073832558900547635)
   admin_role = discord.utils.get(guild.roles, name='Modmail License Certified')
@@ -328,6 +329,7 @@ async def on_message(ctx):
         print("RETURNING USER")
         cursor.execute("SELECT channel_id FROM modmail WHERE user_id = (?)", (ctx.author.id, ))
         channel_id = cursor.fetchone()
+        print("channel_id:" channel_id)
         for id in channel_id:
           channel_id = id
           break
@@ -355,14 +357,33 @@ async def on_message(ctx):
     else:
       try:
         print("NEW USER")
+        em = discord.Embed(title="Create a ticket?", description="If you want to create a ticket, react with ✅")
+        em.set_footer(text="if you don't want to create a ticket, you can ignore this message.")
+        msg = await ctx.channel.send(embed=em)
+        author = ctx.author
+        for emoji in ('✅'): # https://stackoverflow.com/questions/62129427/check-if-a-specific-user-reacted-discord-py
+          await msg.add_reaction(emoji) 
+          try:
+
+            def reactcheck(rctn, user):
+                return user.id == ctx.author.id and str(rctn) == '✅'
+
+            rctn, user = await bot.wait_for("reaction_add", check=reactcheck, timeout=30)
+
+            await ctx.channel.send("Ticket created!")
+            break
+          except asyncio.TimeoutError:
+            await ctx.channel.send("Sorry, you didn't react in time!")
+            return
+
         overwrites = {
           guild.default_role : discord.PermissionOverwrite(read_messages=False),
           admin_role : discord.PermissionOverwrite(read_messages=True)
         }
 
-        modmail_channel = await guild.create_text_channel(f"ticket-{ctx.author.name}", overwrites=overwrites, category=category)
+        modmail_channel = await guild.create_text_channel(f"ticket-{author.name}", overwrites=overwrites, category=category)
 
-        cursor.execute("INSERT INTO modmail VALUES (? , ?)", (ctx.author.id, modmail_channel.id, ))
+        cursor.execute("INSERT INTO modmail VALUES (? , ?)", (author.id, modmail_channel.id, ))
         db.commit()
         
         embed = discord.Embed(title="New Modmail Ticket", color = discord.Color.green(), timestamp=datetime.now(), description=ctx.content)
@@ -399,11 +420,10 @@ async def on_message(ctx):
 
               await user.send(embed=close_embed)
               channel = ctx.channel
-              await channel.send(f"***Ticket Closed by {ctx.author.name}***")
+              await channel.send(f"***Ticket Closed by {ctx.author.mention}***")
               await channel.set_permissions(admin_role, send_messages=False)
-              await channel.edit(name=f"closed-{user.name}")
               newcatg = bot.get_channel(1074113413707468830)
-              await channel.move(category=newcatg)
+              await channel.edit(name=f"closed-{user.name}", position=newcatg)
               cursor.execute("DELETE FROM modmail WHERE channel_id = (?),", (channel.id, ))
               db.commit()
               return
