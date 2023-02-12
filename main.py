@@ -376,7 +376,6 @@ async def on_message(ctx):
 
   else:
     if ctx.channel.category == category:
-      if ctx.channel.category == category:
       if "ticket-" not in ctx.channel.name:
         return
       cursor.execute("SELECT channel_id FROM modmail WHERE user_id = (?)", (ctx.author.id, ))
