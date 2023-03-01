@@ -438,13 +438,14 @@ async def on_message(ctx):
                             overwrite.send_messages = False
                             overwrite.read_messages = True
                             await channel.set_permissions(admin_role, overwrite=overwrite)
-                            archive = discord.utils.get(ctx.guild.channels, name='"archives"')
-                            print(archive)
                             await channel.edit(name=f"closed-{user.name}")
-                            await channel.move(category=archive)
                             
                             cursor.execute("DELETE FROM modmail WHERE channel_id = (?)", (channel.id, ))
                             db.commit()
+                            
+                            archive = discord.utils.get(ctx.guild.channels, name='"archives"')
+                            print(archive)
+                            await channel.move(category=archive)
                             return
                         else:
                             embed = discord.Embed(
