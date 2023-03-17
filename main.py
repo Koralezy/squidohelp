@@ -407,13 +407,19 @@ async def on_message(ctx):
     else:
         if ctx.channel.category == category:
             print("CATEGORY VERIFIED")
+
+            cursor.execute("INSERT INTO modmail VALUES (?, ?)", (ctx.author.id, ctx.channel.id, ))
+            db.commit()
+            print("db.commit success")
+            
             cursor.execute("SELECT channel_id FROM modmail WHERE user_id = (?)", (ctx.author.id, ))
             print("CURSOR.EXECUTE SUCCESS")
+            print(f"ctx.author.id: {ctx.author.id}")
             if check(cursor.fetchone()) is True:
                 print("FOUND TICKET USER")
                 try:
                     cursor.execute("SELECT user_id FROM modmail WHERE channel_id = (?)", (ctx.channel.id, ))
-                    print(ctx.channel.id)
+                    print(f"ctx.channel.id: {ctx.channel.id}")
                     user_id = cursor.fetchone()
 
                     for id in user_id:
