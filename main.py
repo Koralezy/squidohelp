@@ -16,12 +16,12 @@ bot = discord.Bot(intents=discord.Intents.all())
 db = sqlite3.connect('modmail.db')
 cursor = db.cursor()
 
-cursor.execute("""
-    CREATE TABLE modmail (
-      user_id int,
-      channel_id int
-    )
-""")
+# cursor.execute("""
+#     CREATE TABLE modmail (
+#       user_id int,
+#       channel_id int
+#     )
+# """)
 # CTRL + / to add/remove comment :O
 
 def check(key):
@@ -413,6 +413,7 @@ async def on_message(ctx):
                 print("FOUND TICKET USER")
                 try:
                     cursor.execute("SELECT user_id FROM modmail WHERE channel_id = (?)", (ctx.channel.id, ))
+                    print(ctx.channel.id)
                     user_id = cursor.fetchone()
 
                     for id in user_id:
