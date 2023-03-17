@@ -454,9 +454,9 @@ async def on_message(ctx):
                             cursor.execute("DELETE FROM modmail WHERE channel_id = (?)", (channel.id, ))
                             db.commit()
                             
-                            archive = discord.utils.get(guild.channels, name='archives')
-                            print(archive)
-                            await channel.move(category=archive)
+                            # archive = discord.utils.get(guild.channels, name='archives')
+                            # print(archive)
+                            # await channel.move(category=archive)
                             return
                         else:
                             embed = discord.Embed(
