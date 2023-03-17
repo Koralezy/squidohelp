@@ -16,12 +16,12 @@ bot = discord.Bot(intents=discord.Intents.all())
 db = sqlite3.connect('modmail.db')
 cursor = db.cursor()
 
-# cursor.execute("""
-#     CREATE TABLE modmail (
-#       user_id int,
-#       channel_id int
-#     )
-# """)
+cursor.execute("""
+    CREATE TABLE modmail (
+      user_id int,
+      channel_id int
+    )
+""")
 # CTRL + / to add/remove comment :O
 
 def check(key):
@@ -314,11 +314,12 @@ async def setlogs(ctx):
 
 # -------------------- Modmail --------------------
 
-# https://youtu.be/R20ZOQUoKFo
+# https://youtu.be/R20ZOQUoKFo | https://github.com/PiggehJB/modmail-reworked
 @bot.event
 async def on_message(ctx):
     guild = bot.get_guild(1063629621528100874)
     category = bot.get_channel(1073832558900547635)
+    vill = bot.get_guild(969391671982841936)
     admin_role = discord.utils.get(guild.roles, name='Modmail License Certified')
 
     if ctx.author == bot.user:
@@ -405,8 +406,11 @@ async def on_message(ctx):
 
     else:
         if ctx.channel.category == category:
+            print("CATEGORY VERIFIED")
             cursor.execute("SELECT channel_id FROM modmail WHERE user_id = (?)", (ctx.author.id, ))
+            print("CURSOR.EXECUTE SUCCESS")
             if check(cursor.fetchone()) is True:
+                print("FOUND TICKET USER")
                 try:
                     cursor.execute("SELECT user_id FROM modmail WHERE channel_id = (?)", (ctx.channel.id, ))
                     user_id = cursor.fetchone()
@@ -415,7 +419,7 @@ async def on_message(ctx):
                         user_id = id
                         break
                 
-                    user = discord.utils.get(guild.members, id=user_id)
+                    user = discord.utils.get(vill.members, id=user_id)
                     if user is None:
                         await ctx.reply("I can't find that user ⚠")
                         await ctx.add_reaction(emoji='❌')
@@ -443,7 +447,7 @@ async def on_message(ctx):
                             cursor.execute("DELETE FROM modmail WHERE channel_id = (?)", (channel.id, ))
                             db.commit()
                             
-                            archive = discord.utils.get(ctx.guild.channels, name='"archives"')
+                            archive = discord.utils.get(guild.channels, name='archives')
                             print(archive)
                             await channel.move(category=archive)
                             return
@@ -468,7 +472,8 @@ async def on_message(ctx):
                 except Exception as e:
                     print(e)
                     await ctx.add_reaction(emoji='❌')
-
+            else:
+              print("NO CHANNEL ID")
 
 # -------------------- Anti-raid --------------------
 
