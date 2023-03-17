@@ -408,79 +408,78 @@ async def on_message(ctx):
         if ctx.channel.category == category:
             print("CATEGORY VERIFIED")
 
-            cursor.execute("INSERT INTO modmail VALUES (?, ?)", (ctx.author.id, ctx.channel.id, ))
-            db.commit()
-            print("db.commit success")
+            # cursor.execute("INSERT INTO modmail VALUES (?, ?)", (ctx.author.id, ctx.channel.id, ))
+            # db.commit()
+            # print("db.commit success")
             
-            cursor.execute("SELECT channel_id FROM modmail WHERE user_id = (?)", (ctx.author.id, ))
-            print("CURSOR.EXECUTE SUCCESS")
-            print(f"ctx.author.id: {ctx.author.id}")
-            if check(cursor.fetchone()) is True:
-                print("FOUND TICKET USER")
-                try:
-                    cursor.execute("SELECT user_id FROM modmail WHERE channel_id = (?)", (ctx.channel.id, ))
-                    print(f"ctx.channel.id: {ctx.channel.id}")
-                    user_id = cursor.fetchone()
+            # cursor.execute("SELECT channel_id FROM modmail WHERE user_id = (?)", (ctx.author.id, ))
+            # print("CURSOR.EXECUTE SUCCESS")
+            
+            # if check(cursor.fetchone()) is True:
+            print("FOUND TICKET USER")
+            try:
+                cursor.execute("SELECT user_id FROM modmail WHERE channel_id = (?)", (ctx.channel.id, ))
+                print(f"ctx.channel.id: {ctx.channel.id}")
+                user_id = cursor.fetchone()
 
-                    for id in user_id:
-                        user_id = id
-                        break
-                
-                    user = discord.utils.get(vill.members, id=user_id)
-                    if user is None:
-                        await ctx.reply("I can't find that user ⚠")
-                        await ctx.add_reaction(emoji='❌')
+                for id in user_id:
+                    user_id = id
+                    break
+            
+                user = discord.utils.get(vill.members, id=user_id)
+                if user is None:
+                    await ctx.reply("I can't find that user ⚠")
+                    await ctx.add_reaction(emoji='❌')
+                    return
+                else:
+                    if ctx.content == '!close':
+                        close_embed = discord.Embed(
+                            title="Ticket is Closed",
+                            timestamp=datetime.now(),
+                            color = discord.colour.Color.nitro_pink(),
+                            description=f"Closed by {ctx.author.mention}"
+                        )
+                        close_embed.set_footer(text="By replying, you will open another ticket")
+                        await user.send(embed=close_embed)
+                        channel = ctx.channel
+                        channel = ctx.channel
+                        await channel.send(f"***Ticket Closed by {ctx.author.mention}***")
+
+                        overwrite = discord.PermissionOverwrite()
+                        overwrite.send_messages = False
+                        overwrite.read_messages = True
+                        await channel.set_permissions(admin_role, overwrite=overwrite)
+                        await channel.edit(name=f"closed-{user.name}")
+                        
+                        cursor.execute("DELETE FROM modmail WHERE channel_id = (?)", (channel.id, ))
+                        db.commit()
+                        
+                        # archive = discord.utils.get(guild.channels, name='archives')
+                        # print(archive)
+                        # await channel.move(category=archive)
                         return
                     else:
-                        if ctx.content == '!close':
-                            close_embed = discord.Embed(
-                                title="Ticket is Closed",
-                                timestamp=datetime.now(),
-                                color = discord.colour.Color.nitro_pink(),
-                                description=f"Closed by {ctx.author.mention}"
-                            )
-                            close_embed.set_footer(text="By replying, you will open another ticket")
-                            await user.send(embed=close_embed)
-                            channel = ctx.channel
-                            channel = ctx.channel
-                            await channel.send(f"***Ticket Closed by {ctx.author.mention}***")
+                        embed = discord.Embed(
+                            title="Message From {}".format(ctx.guild.name),
+                            color = discord.colour.Color.og_blurple(),
+                            timestamp=datetime.now(),
+                            description=ctx.content
+                        )
+                        embed.set_footer(
+                        text=f"Sent by {ctx.author} • {ctx.author.id}",
+                        icon_url = ctx.author.avatar.url
+                        )
 
-                            overwrite = discord.PermissionOverwrite()
-                            overwrite.send_messages = False
-                            overwrite.read_messages = True
-                            await channel.set_permissions(admin_role, overwrite=overwrite)
-                            await channel.edit(name=f"closed-{user.name}")
-                            
-                            cursor.execute("DELETE FROM modmail WHERE channel_id = (?)", (channel.id, ))
-                            db.commit()
-                            
-                            # archive = discord.utils.get(guild.channels, name='archives')
-                            # print(archive)
-                            # await channel.move(category=archive)
-                            return
-                        else:
-                            embed = discord.Embed(
-                                title="Message From {}".format(ctx.guild.name),
-                                color = discord.colour.Color.og_blurple(),
-                                timestamp=datetime.now(),
-                                description=ctx.content
-                            )
-                            embed.set_footer(
-                            text=f"Sent by {ctx.author} • {ctx.author.id}",
-                            icon_url = ctx.author.avatar.url
-                            )
-
-                            embed.set_author(
-                            name=ctx.author.name,
-                            icon_url = ctx.author.avatar.url
-                            )
-                            await user.send(embed=embed)
-                        await ctx.add_reaction(emoji='✅')
-                except Exception as e:
-                    print(e)
-                    await ctx.add_reaction(emoji='❌')
-            else:
-              print("NO CHANNEL ID")
+                        embed.set_author(
+                        name=ctx.author.name,
+                        icon_url = ctx.author.avatar.url
+                        )
+                        await user.send(embed=embed)
+                    await ctx.add_reaction(emoji='✅')
+            except Exception as e:
+                print(e)
+                await ctx.add_reaction(emoji='❌')
+            
 
 # -------------------- Anti-raid --------------------
 
