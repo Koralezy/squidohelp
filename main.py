@@ -499,7 +499,7 @@ async def on_message(ctx):
             
 # -------------------- /close --------------------
 
-@bot.command(description="(Modmail) Closes a ticket")
+@bot.command(guild_ids=[1063629621528100874], description="(Modmail) Closes a ticket")
 @has_role(1066963647131308092)
 async def close(ctx):
   category = bot.get_channel(1073832558900547635)
@@ -551,7 +551,7 @@ async def close(ctx):
 
 # -------------------- /noembed --------------------
 
-@bot.command(description="(Modmail) Sends a message in plain text")
+@bot.command(guild_ids=[1063629621528100874], description="(Modmail) Sends a message in plain text")
 @has_role(1066963647131308092)
 async def noembed(ctx, message: Option(str, description="The message you would like to send")):
   category = bot.get_channel(1073832558900547635)
