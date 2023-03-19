@@ -1,7 +1,7 @@
 import discord  # pycord\
 from discord import Option
 from discord.ext import commands, tasks
-from discord.ext.commands import has_permissions
+from discord.ext.commands import has_permissions, has_role
 from itertools import cycle
 import threading
 import time
@@ -319,7 +319,7 @@ async def setlogs(ctx):
 async def on_message(ctx):
     guild = bot.get_guild(1063629621528100874)
     category = bot.get_channel(1073832558900547635)
-    vill = bot.get_guild(969391671982841936)
+    # vill = bot.get_guild(969391671982841936)
     admin_role = discord.utils.get(guild.roles, name='Modmail License Certified')
 
     if ctx.author == bot.user:
@@ -436,13 +436,13 @@ async def on_message(ctx):
                     user_id = id
                     break
             
-                user = discord.utils.get(vill.members, id=user_id)
+                user = discord.utils.get(bot.get_all_members(), id=user_id) #vill.members
                 if user is None:
                     await ctx.reply("I can't find that user ⚠")
                     await ctx.add_reaction(emoji='❌')
                     return
                 else:
-                    if ctx.content == '!close':
+                    if ctx.content == '!close': # -------------------- !close --------------------
                         close_embed = discord.Embed(
                             title="Ticket is Closed",
                             timestamp=datetime.now(),
@@ -467,7 +467,7 @@ async def on_message(ctx):
                         # print(archive)
                         # await channel.move(category=archive)
                         return
-                    elif ctx.content.startswith("!noembed"):
+                    elif ctx.content.startswith("!noembed"): # -------------------- !noembed --------------------
                       msgcontent = ctx.content.replace("!noembed", f"**From {ctx.author.name}:**")
                       await user.send(msgcontent)
                     else:
@@ -497,7 +497,82 @@ async def on_message(ctx):
                 print(e)
                 await ctx.add_reaction(emoji='❌')
             
+# -------------------- /close --------------------
 
+@bot.command(description="(Modmail) Closes a ticket")
+@has_role(1066963647131308092)
+async def close(ctx):
+  category = bot.get_channel(1073832558900547635)
+  guild = bot.get_guild(1063629621528100874)
+  admin_role = discord.utils.get(guild.roles, name='Modmail License Certified')
+  if ctx.channel.category == category:
+    try:
+      cursor.execute("SELECT user_id FROM modmail WHERE channel_id = (?)", (ctx.channel.id, ))
+      user_id = cursor.fetchone()
+    
+      for id in user_id:
+        user_id = id
+        break
+
+      user = discord.utils.get(bot.get_all_members(), id=user_id)
+      if user is None:
+        await ctx.reply("I can't find that user ⚠")
+        await ctx.add_reaction(emoji='❌')
+        return
+      
+      close_embed = discord.Embed(
+      title="Ticket is Closed",
+      timestamp=datetime.now(),
+      color = discord.colour.Color.nitro_pink(),
+      description=f"Closed by {ctx.author.mention}"
+      )
+      close_embed.set_footer(text="By replying, you will open another ticket")
+      await user.send(embed=close_embed)
+      channel = ctx.channel
+      await ctx.respond(f"***Ticket Closed by {ctx.author.mention}***")
+
+      overwrite = discord.PermissionOverwrite()
+      overwrite.send_messages = False
+      overwrite.read_messages = True
+      await channel.set_permissions(admin_role, overwrite=overwrite)
+      await channel.edit(name=f"closed-{user.name}")
+      
+      cursor.execute("DELETE FROM modmail WHERE channel_id = (?)", (channel.id, ))
+      db.commit()
+    except Exception as e:
+      print(e)
+      error = str(e)
+      if "permissions" in error.lower():
+        await ctx.respond("I'm missing permissions!")
+      else:
+        await ctx.respond("Could not close ticket!")
+  else:
+    await ctx.respond("This isn't a ticket!")
+
+# -------------------- /noembed --------------------
+
+@bot.command(description="(Modmail) Sends a message in plain text")
+@has_role(1066963647131308092)
+async def noembed(ctx, message: Option(str, description="The message you would like to send")):
+  category = bot.get_channel(1073832558900547635)
+  if ctx.channel.category == category:
+    try:
+      cursor.execute("SELECT user_id FROM modmail WHERE channel_id = (?)", (ctx.channel.id, ))
+      user_id = cursor.fetchone()
+        
+      for id in user_id:
+        user_id = id
+        break
+
+      user = discord.utils.get(bot.get_all_members(), id=user_id)
+      msgcontent = message.replace("!noembed", f"**From {ctx.author.name}:**")
+      await user.send(msgcontent)
+    except Exception as e:
+      print(e)
+  else:
+    await ctx.respond("This isn't a ticket!")
+      
+  
 # -------------------- Anti-raid --------------------
 
 
