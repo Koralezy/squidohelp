@@ -452,7 +452,6 @@ async def on_message(ctx):
                         close_embed.set_footer(text="By replying, you will open another ticket")
                         await user.send(embed=close_embed)
                         channel = ctx.channel
-                        channel = ctx.channel
                         await channel.send(f"***Ticket Closed by {ctx.author.mention}***")
 
                         overwrite = discord.PermissionOverwrite()
@@ -464,7 +463,7 @@ async def on_message(ctx):
                         cursor.execute("DELETE FROM modmail WHERE channel_id = (?)", (channel.id, ))
                         db.commit()
                         
-                        # archive = discord.utils.get(guild.channels, name='archives')
+                        # archive = bot.get_channel(1074113413707468830)
                         # print(archive)
                         # await channel.move(category=archive)
                         return
