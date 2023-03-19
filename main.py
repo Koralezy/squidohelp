@@ -575,6 +575,7 @@ async def noembed(ctx, message: Option(str, description="The message you would l
       user = discord.utils.get(bot.get_all_members(), id=user_id)
       msgcontent = message.replace("!noembed", f"**From {ctx.author.name}:**")
       await user.send(msgcontent)
+      await ctx.respond(f"{msgcontent} \n*(sent with no embed)*")
     except Exception as e:
       print(e)
   else:
