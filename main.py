@@ -489,7 +489,7 @@ async def on_message(ctx):
 
                         if ctx.attachments:
                           for x in ctx.attachments:
-                            await modmail_channel.send(content=x.url)
+                            await user.send(content=x.url)
                             
                     await ctx.add_reaction(emoji='✅')
             except Exception as e:
