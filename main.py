@@ -463,9 +463,8 @@ async def on_message(ctx):
                         cursor.execute("DELETE FROM modmail WHERE channel_id = (?)", (channel.id, ))
                         db.commit()
                         
-                        # archive = bot.get_channel(1074113413707468830)
-                        # print(archive)
-                        # await channel.move(category=archive)
+                        archive = discord.utils.get(ctx.guild.channels, name="archives")
+                        await channel.edit(category=archive)
                         return
                     elif ctx.content.startswith("!noembed"): # -------------------- !noembed --------------------
                       msgcontent = ctx.content.replace("!noembed", f"**From {ctx.author.name}:**")
@@ -539,6 +538,9 @@ async def close(ctx):
       
       cursor.execute("DELETE FROM modmail WHERE channel_id = (?)", (channel.id, ))
       db.commit()
+
+      archive = discord.utils.get(ctx.guild.channels, name="archives")
+      await channel.edit(category=archive)
     except Exception as e:
       print(e)
       error = str(e)
