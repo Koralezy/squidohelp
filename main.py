@@ -352,6 +352,10 @@ async def on_message(ctx):
                 embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
 
                 await channel.send(embed=embed)
+                if ctx.attachments:
+                  for x in ctx.attachments:
+                    await channel.send(content=x.url)
+                  
                 await ctx.add_reaction(emoji='✅')
 
             except Exception as e:
@@ -398,8 +402,14 @@ async def on_message(ctx):
                     description=ctx.content
                 )
                 embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
+
                 await modmail_channel.send(embed=embed)
+                if ctx.attachments:
+                  for x in ctx.attachments:
+                    await modmail_channel.send(content=x.url)
+
                 await ctx.add_reaction(emoji='✅')
+
             except Exception as e:
                 print(e)
                 await ctx.add_reaction(emoji='❌')
@@ -458,6 +468,9 @@ async def on_message(ctx):
                         # print(archive)
                         # await channel.move(category=archive)
                         return
+                    elif ctx.content.startswith("!noembed"):
+                      msgcontent = ctx.content.replace("!noembed", f"**From {ctx.author.name}:**")
+                      await user.send(msgcontent)
                     else:
                         embed = discord.Embed(
                             title="Message From {}".format(ctx.guild.name),
@@ -475,6 +488,11 @@ async def on_message(ctx):
                         icon_url = ctx.author.avatar.url
                         )
                         await user.send(embed=embed)
+
+                        if ctx.attachments:
+                          for x in ctx.attachments:
+                            await modmail_channel.send(content=x.url)
+                            
                     await ctx.add_reaction(emoji='✅')
             except Exception as e:
                 print(e)
