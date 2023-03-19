@@ -355,7 +355,7 @@ async def on_message(ctx):
                     channel = new_channel
                 
                 embed = discord.Embed(title="New Message", color=discord.Color.purple(), timestamp=datetime.now(), description=ctx.content)
-                embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
+                embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
 
                 await channel.send(embed=embed)
                 if ctx.attachments:
@@ -407,7 +407,7 @@ async def on_message(ctx):
                     timestamp=datetime.now(),
                     description=ctx.content
                 )
-                embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
+                embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
 
                 await modmail_channel.send(embed=embed)
                 if ctx.attachments:
@@ -473,7 +473,7 @@ async def on_message(ctx):
                         await channel.edit(category=archive)
                         return
                     elif ctx.content.startswith("!noembed"): # -------------------- !noembed --------------------
-                      msgcontent = ctx.content.replace("!noembed", f"**From {ctx.author.name}:**")
+                      msgcontent = ctx.content.replace("!noembed", f"**From {ctx.author}:**")
                       await user.send(msgcontent)
                     else:
                         embed = discord.Embed(
@@ -488,7 +488,7 @@ async def on_message(ctx):
                         )
 
                         embed.set_author(
-                        name=ctx.author.name,
+                        name=ctx.author,
                         icon_url = ctx.author.avatar.url
                         )
                         await user.send(embed=embed)
@@ -573,7 +573,7 @@ async def noembed(ctx, message: Option(str, description="The message you would l
         break
 
       user = discord.utils.get(bot.get_all_members(), id=user_id)
-      await user.send(f"**From {ctx.author.name}:** {message}")
+      await user.send(f"**From {ctx.author}:** {message}")
       await ctx.respond(f"{message} \n\n*(sent with no embed)*")
     except Exception as e:
       print(e)
