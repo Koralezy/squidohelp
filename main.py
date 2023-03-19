@@ -483,7 +483,7 @@ async def on_message(ctx):
                             description=ctx.content
                         )
                         embed.set_footer(
-                        text=f"Sent by {ctx.author} • {ctx.author.id}",
+                        text=f"Sent by {ctx.author}",
                         icon_url = ctx.author.avatar.url
                         )
 
@@ -573,8 +573,7 @@ async def noembed(ctx, message: Option(str, description="The message you would l
         break
 
       user = discord.utils.get(bot.get_all_members(), id=user_id)
-      msgcontent = message.replace("!noembed", f"**From {ctx.author.name}:**")
-      await user.send(msgcontent)
+      await user.send(f"**From {ctx.author.name}:** {message}")
       await ctx.respond(f"{msgcontent} \n*(sent with no embed)*")
     except Exception as e:
       print(e)
