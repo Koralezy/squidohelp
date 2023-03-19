@@ -36,8 +36,14 @@ async def on_ready():
   testguild = bot.get_channel(964992479277514832)
   rntime = datetime.now().timestamp()
   await testguild.send(f"**Bot online** as of <t:{int(rntime)}>! :D")
-  await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="DMs for help :D"))
+  #await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="DMs for help :D"))
+  change_status.start()
 
+statuslist = cycle(["DMs for help :D", "#AgainstShelley >:(", "over the squids"])
+
+@tasks.loop(seconds=120)
+async def change_status():
+  await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=(next(statuslist))))
 
 # -------------------- Commands --------------------
 
@@ -415,8 +421,8 @@ async def on_message(ctx):
                 await ctx.add_reaction(emoji='❌')
 
     else:
-        if ctx.channel.category == category:
-            print("CATEGORY VERIFIED")
+        if ctx.channel.category == category and "ticket-" in ctx.channel.name:
+            print("CATEGORY AND NAME VERIFIED")
 
             # cursor.execute("INSERT INTO modmail VALUES (?, ?)", (ctx.author.id, ctx.channel.id, ))
             # db.commit()
