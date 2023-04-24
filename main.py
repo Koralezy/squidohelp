@@ -409,7 +409,7 @@ async def on_message(ctx):
                 )
                 embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
 
-                await modmail_channel.send(embed=embed)
+                await modmail_channel.send("<@&1066963647131308092>", embed=embed)
                 if ctx.attachments:
                   for x in ctx.attachments:
                     await modmail_channel.send(content=x.url)
