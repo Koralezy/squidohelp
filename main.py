@@ -64,7 +64,7 @@ async def help(ctx):
   embed.add_field(name="/unlock", value="Unlocks channel.", inline=False)
   embed.add_field(name="/setlogs", value="Set the logs channel.", inline=False)
 
-  await ctx.respond(embed=embed)
+  await ctx.send_response(embed=embed)
 
 # -------------------- /mute --------------------
 
@@ -72,10 +72,10 @@ async def help(ctx):
 @has_permissions(moderate_members=True)
 async def mute(ctx, member: Option(discord.Member, description="Who you want to mute", required=True), reason: Option(str, required=False), days: Option(int, required=False), hours: Option(int, required=False), minutes: Option(int, required=False)):
   if member.id == ctx.author.id:
-    await ctx.respond("You can't mute yourself!")
+    await ctx.send_response("You can't mute yourself!")
     return
   elif member.guild_permissions.manage_channels and not ctx.author.guild_permissions.manage_channels:
-    await ctx.respond("I think this is a staff member...")
+    await ctx.send_response("I think this is a staff member...")
     return  
 
   check=0
@@ -107,7 +107,7 @@ async def mute(ctx, member: Option(discord.Member, description="Who you want to 
     check=check+1
   
   if check == 3:
-    await ctx.respond("**Mute unsuccessful!** Did you put in a duration?")
+    await ctx.send_response("**Mute unsuccessful!** Did you put in a duration?")
     check=0
     return
   
@@ -116,7 +116,7 @@ async def mute(ctx, member: Option(discord.Member, description="Who you want to 
   try:
     await member.timeout_for(duration, reason=reason)
   except:
-    await ctx.respond("I could not mute this member!")
+    await ctx.send_response("I could not mute this member!")
     return
   embed = discord.Embed(title="Member Muted", color=discord.Color.red(), timestamp=datetime.utcnow())
   embed.add_field(name="Member", value=f"{member.mention}", inline=True)
@@ -131,7 +131,7 @@ async def mute(ctx, member: Option(discord.Member, description="Who you want to 
   logs = bot.get_channel(logch)
   await logs.send(content=f"**Member muted** in <#{ctx.channel.id}> !", embed=embed)
 
-  await ctx.respond(f"{member.mention} has been timed out for**{d}{h}{m}** for **{r}.**")
+  await ctx.send_response(f"{member.mention} has been timed out for**{d}{h}{m}** for **{r}.**")
 
 # -------------------- /unmute --------------------
 
@@ -141,7 +141,7 @@ async def unmute(ctx, member: Option(discord.Member, description="Who you want t
   try:
     await member.remove_timeout(reason=reason)
   except:
-    await ctx.respond("I could not unmute this member!")
+    await ctx.send_response("I could not unmute this member!")
     return
   if reason == None:
     reason="unspecified reason"
@@ -157,7 +157,7 @@ async def unmute(ctx, member: Option(discord.Member, description="Who you want t
   logs = bot.get_channel(logch)
   await logs.send(content=f"**Member unmuted** in <#{ctx.channel.id}> !", embed=embed)
 
-  await ctx.respond(f"{member.mention} has been unmuted for **{reason}.**")
+  await ctx.send_response(f"{member.mention} has been unmuted for **{reason}.**")
 
 # -------------------- /kick --------------------
 
@@ -165,10 +165,10 @@ async def unmute(ctx, member: Option(discord.Member, description="Who you want t
 @has_permissions(kick_members=True)
 async def kick(ctx, member: Option(discord.Member, description="Who you want to kick", required=True), reason: Option(str, required=False)):
   if member.id == ctx.author.id:
-    await ctx.respond("You can't kick yourself!")
+    await ctx.send_response("You can't kick yourself!")
     return
   if member.guild_permissions.manage_channels and not ctx.author.guild_permissions.manage_channels:
-    await ctx.respond("I think this is a staff member...")
+    await ctx.send_response("I think this is a staff member...")
     return
   if reason==None:
     reason="unspecified reason"
@@ -176,7 +176,7 @@ async def kick(ctx, member: Option(discord.Member, description="Who you want to 
   try:
     await member.kick(reason=reason)
   except:
-    await ctx.respond("I could not kick this member!")  
+    await ctx.send_response("I could not kick this member!")  
     return
 
   embed = discord.Embed(title="Member Kicked", color=discord.Color.red(), timestamp=datetime.utcnow())
@@ -191,7 +191,7 @@ async def kick(ctx, member: Option(discord.Member, description="Who you want to 
   logs = bot.get_channel(logch)
   await logs.send(content=f"**Member kicked** in <#{ctx.channel.id}> !", embed=embed)
 
-  await ctx.respond(f"{member.mention} has been **kicked** for `{reason}`!")
+  await ctx.send_response(f"{member.mention} has been **kicked** for `{reason}`!")
   
 # -------------------- /ban --------------------
 
@@ -199,10 +199,10 @@ async def kick(ctx, member: Option(discord.Member, description="Who you want to 
 @has_permissions(ban_members=True)
 async def ban(ctx, member: Option(discord.Member, description="Who you want to ban", required=True)):
   if member.id == ctx.author.id:
-    await ctx.respond("You can't ban yourself!")
+    await ctx.send_response("You can't ban yourself!")
     return
   if member.guild_permissions.manage_channels and not ctx.author.guild_permissions.manage_channels:
-    await ctx.respond("I think this is a staff member...")
+    await ctx.send_response("I think this is a staff member...")
     return
   if reason==None:
     reason="unspecified reason"
@@ -210,7 +210,7 @@ async def ban(ctx, member: Option(discord.Member, description="Who you want to b
   try:
     await member.ban(reason=reason)
   except:
-    await ctx.respond("I could not ban this member!")
+    await ctx.send_response("I could not ban this member!")
     return  
 
   embed = discord.Embed(title="Member Banned", color=discord.Color.red(), timestamp=datetime.utcnow())
@@ -225,7 +225,7 @@ async def ban(ctx, member: Option(discord.Member, description="Who you want to b
   logs = bot.get_channel(logch)
   await logs.send(content=f"**Member banned** in <#{ctx.channel.id}> !", embed=embed)
 
-  await ctx.respond(f"{member.mention} has been **banned** for `{reason}`!")
+  await ctx.send_response(f"{member.mention} has been **banned** for `{reason}`!")
 
 # -------------------- /unban --------------------
 
@@ -235,7 +235,7 @@ async def unban(ctx, member: Option(discord.Member, description="Who you want to
   try:
     await member.unban(reason=reason)
   except:
-    await ctx.respond("I could not unban this member!")
+    await ctx.send_response("I could not unban this member!")
     return
   if reason == None:
     reason="unspecified reason"
@@ -251,7 +251,7 @@ async def unban(ctx, member: Option(discord.Member, description="Who you want to
   logs = bot.get_channel(logch)
   await logs.send(content=f"**Member unbanned** in <#{ctx.channel.id}> !", embed=embed)
 
-  await ctx.respond(f"{member.mention} has been unbanned for **{reason}.**")
+  await ctx.send_response(f"{member.mention} has been unbanned for **{reason}.**")
 
 # -------------------- /purge --------------------
 
@@ -259,7 +259,7 @@ async def unban(ctx, member: Option(discord.Member, description="Who you want to
 @has_permissions(manage_messages=True)
 async def purge(ctx, limit: Option(int, description="How many messages you want to delete")):
   await ctx.channel.purge(limit=limit + 1)
-  await ctx.respond('Cleared by {}'.format(ctx.author.mention), delete_after=3)
+  await ctx.send_response('Cleared by {}'.format(ctx.author.mention), delete_after=3)
   await ctx.message.delete()
 
 # -------------------- /lockdown --------------------
@@ -279,7 +279,7 @@ async def lockdown(ctx):
   logs = bot.get_channel(logch)
   await logs.send(content=f"<#{ctx.channel.id}> was locked!", embed=embed)
 
-  await ctx.respond(
+  await ctx.send_response(
     ctx.channel.mention + " ***is now in lockdown.*** (Roles that have the [Send Messages] permission in this channel can still talk.)")
 
 # -------------------- /unlock --------------------
@@ -298,9 +298,9 @@ async def unlock(ctx):
     logch = int(data[str(ctx.guild.id)])
     logs = bot.get_channel(logch)
     await logs.send(content=f"<#{ctx.channel.id}> was unlocked!", embed=embed)
-    await ctx.respond(f"<#{ctx.channel.id}> ***has been unlocked.***")
+    await ctx.send_response(f"<#{ctx.channel.id}> ***has been unlocked.***")
   except:
-    await ctx.respond(ctx.channel.mention + "is not locked. Check the channel permissions.")
+    await ctx.send_response(ctx.channel.mention + "is not locked. Check the channel permissions.")
 
 # -------------------- /setlogs --------------------
 
@@ -315,7 +315,7 @@ async def setlogs(ctx):
   with open("logs.json", 'w') as f:
     json.dump(data, f)
 
-  await ctx.respond(f"**{ctx.guild.name}** log channel set to **{ctx.channel.mention}!**")
+  await ctx.send_response(f"**{ctx.guild.name}** log channel set to **{ctx.channel.mention}!**")
 
 
 # -------------------- Modmail --------------------
@@ -534,7 +534,7 @@ async def close(ctx):
       close_embed.set_footer(text="By replying, you will open another ticket")
       await user.send(embed=close_embed)
       channel = ctx.channel
-      await ctx.respond(f"***Ticket Closed by {ctx.author.mention}***")
+      await ctx.send_response(f"***Ticket Closed by {ctx.author.mention}***")
 
       overwrite = discord.PermissionOverwrite()
       overwrite.send_messages = False
@@ -551,11 +551,11 @@ async def close(ctx):
       print(e)
       error = str(e)
       if "permissions" in error.lower():
-        await ctx.respond("I'm missing permissions!")
+        await ctx.send_response("I'm missing permissions!")
       else:
-        await ctx.respond("Could not close ticket!")
+        await ctx.send_response("Could not close ticket!")
   else:
-    await ctx.respond("This isn't a ticket!")
+    await ctx.send_response("This isn't a ticket!")
 
 # -------------------- /noembed --------------------
 
@@ -574,11 +574,11 @@ async def noembed(ctx, message: Option(str, description="The message you would l
 
       user = discord.utils.get(bot.get_all_members(), id=user_id)
       await user.send(f"**From {ctx.author}:** {message}")
-      await ctx.respond(f"{message} \n\n*(sent with no embed)*")
+      await ctx.send_response(f"{message} \n\n*(sent with no embed)*")
     except Exception as e:
       print(e)
   else:
-    await ctx.respond("This isn't a ticket!")
+    await ctx.send_response("This isn't a ticket!")
       
   
 # -------------------- Anti-raid --------------------
