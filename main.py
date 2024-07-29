@@ -5,10 +5,12 @@ from discord.ext.commands import has_permissions, has_role
 from itertools import cycle
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import json
 import sqlite3
 import asyncio
+import schedule
+import traceback
 #import ffmpeg (for music cmds)
 
 bot = discord.Bot(intents=discord.Intents.all())
@@ -19,9 +21,18 @@ cursor = db.cursor()
 # cursor.execute("""
 #     CREATE TABLE modmail (
 #       user_id int,
-#       channel_id int
+#       channel_id int,
+#       last_msg text
 #     )
 # """)
+# 
+# for adding timeout
+# cursor.execute("""
+#     ALTER TABLE modmail (
+#       last_msg text
+#     )
+# """)
+#
 # CTRL + / to add/remove comment :O
 
 def check(key):
@@ -118,7 +129,7 @@ async def mute(ctx, member: Option(discord.Member, description="Who you want to 
   except:
     await ctx.send_response("I could not mute this member!")
     return
-  embed = discord.Embed(title="Member Muted", color=discord.Color.red(), timestamp=datetime.utcnow())
+  embed = discord.Embed(title="Member Muted", color=discord.Color.red(), timestamp=datetime.datetime.now(datetime.timezone.utc))
   embed.add_field(name="Member", value=f"{member.mention}", inline=True)
   embed.add_field(name="Moderator", value=f"{ctx.author.mention}", inline=True)
   embed.add_field(name="Duration", value=f"{d}{h}{m}", inline=True)
@@ -145,7 +156,7 @@ async def unmute(ctx, member: Option(discord.Member, description="Who you want t
     return
   if reason == None:
     reason="unspecified reason"
-  embed = discord.Embed(title="Member Unuted", color=discord.Color.green(), timestamp=datetime.utcnow())
+  embed = discord.Embed(title="Member Unuted", color=discord.Color.green(), timestamp=datetime.datetime.now(datetime.timezone.utc))
   embed.add_field(name="Member", value=f"{member.mention}", inline=True)
   embed.add_field(name="Moderator", value=f"{ctx.author.mention}", inline=True)
   embed.add_field(name="Reason", value=f"{reason}", inline=True)
@@ -179,7 +190,7 @@ async def kick(ctx, member: Option(discord.Member, description="Who you want to 
     await ctx.send_response("I could not kick this member!")  
     return
 
-  embed = discord.Embed(title="Member Kicked", color=discord.Color.red(), timestamp=datetime.utcnow())
+  embed = discord.Embed(title="Member Kicked", color=discord.Color.red(), timestamp=datetime.datetime.now(datetime.timezone.utc))
   embed.add_field(name="Member", value=f"{member.mention}", inline=True)
   embed.add_field(name="Moderator", value=f"{ctx.author.mention}", inline=True)
   embed.add_field(name="Reason", value=f"{reason}", inline=True)
@@ -213,7 +224,7 @@ async def ban(ctx, member: Option(discord.Member, description="Who you want to b
     await ctx.send_response("I could not ban this member!")
     return  
 
-  embed = discord.Embed(title="Member Banned", color=discord.Color.red(), timestamp=datetime.utcnow())
+  embed = discord.Embed(title="Member Banned", color=discord.Color.red(), timestamp=datetime.datetime.now(datetime.timezone.utc))
   embed.add_field(name="Member", value=f"{member.mention}", inline=True)
   embed.add_field(name="Moderator", value=f"{ctx.author.mention}", inline=True)
   embed.add_field(name="Reason", value=f"{reason}", inline=True)
@@ -239,7 +250,7 @@ async def unban(ctx, member: Option(discord.Member, description="Who you want to
     return
   if reason == None:
     reason="unspecified reason"
-  embed = discord.Embed(title="Member Unbanned", color=discord.Color.green(), timestamp=datetime.utcnow())
+  embed = discord.Embed(title="Member Unbanned", color=discord.Color.green(), timestamp=datetime.datetime.now(datetime.timezone.utc))
   embed.add_field(name="Member", value=f"{member.mention}", inline=True)
   embed.add_field(name="Moderator", value=f"{ctx.author.mention}", inline=True)
   embed.add_field(name="Reason", value=f"{reason}", inline=True)
@@ -268,7 +279,7 @@ async def purge(ctx, limit: Option(int, description="How many messages you want 
 async def lockdown(ctx):
   await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
 
-  embed = discord.Embed(title="Channel Locked", color=discord.Color.red(), timestamp=datetime.utcnow())
+  embed = discord.Embed(title="Channel Locked", color=discord.Color.red(), timestamp=datetime.datetime.now(datetime.timezone.utc))
   embed.add_field(name="Channel", value=f"{ctx.channel.mention}", inline=True)
   embed.add_field(name="Moderator", value=f"{ctx.author.mention}", inline=True)
 
@@ -289,7 +300,7 @@ async def unlock(ctx):
   try:
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
 
-    embed = discord.Embed(title="Channel Unlocked", color=discord.Color.green(), timestamp=datetime.utcnow())
+    embed = discord.Embed(title="Channel Unlocked", color=discord.Color.green(), timestamp=datetime.datetime.now(datetime.timezone.utc))
     embed.add_field(name="Channel", value=f"{ctx.channel.mention}", inline=True)
     embed.add_field(name="Moderator", value=f"{ctx.author.mention}", inline=True)
 
@@ -320,12 +331,56 @@ async def setlogs(ctx):
 
 # -------------------- Modmail --------------------
 
+async def tixtimeout():
+  now = date.today()
+  yesterday = now - timedelta(days = 1)
+  guild = bot.get_guild(969391671982841936)
+  admin_role = discord.utils.get(guild.roles, name='Modmail License Certified')
+
+  cursor.execute("SELECT last_msg FROM modmail")
+  result = cursor.fetchall
+
+  for x in result:
+    if x == yesterday:
+      close_embed = discord.Embed(
+        title="Ticket is Closed",
+        timestamp=datetime.now(),
+        color = discord.colour.Color.nitro_pink(),
+        description=f"Ticket timed out."
+      )
+      close_embed.set_footer(text="By replying, you will open another ticket")
+
+      cursor.execute("SELECT user_id FROM modmail WHERE last_msg = (?)", (x, ))
+      uid = cursor.fetchone()
+      user = bot.get_user(uid)
+
+      cursor.execute("SELECT channel_id FROM modmail WHERE last_msg = (?)", (x, ))
+      cid = cursor.fetchone()
+      channel = bot.get_channel(cid)
+      
+      await user.send(embed=close_embed)
+      await channel.send(f"***Ticket timed out!***")
+
+      overwrite = discord.PermissionOverwrite()
+      overwrite.send_messages = False
+      overwrite.read_messages = True
+      await channel.set_permissions(admin_role, overwrite=overwrite)
+      await channel.edit(name=f"closed-{user.name}")
+      
+      cursor.execute("DELETE FROM modmail WHERE channel_id = (?)", (channel.id, ))
+      db.commit()
+      
+      archive = discord.utils.get(guild.channels, name="archives")
+      await channel.edit(category=archive)
+      return
+      
+schedule.every().day.at("23:59").do(tixtimeout)
+
 # https://youtu.be/R20ZOQUoKFo | https://github.com/PiggehJB/modmail-reworked
 @bot.event
 async def on_message(ctx):
-    guild = bot.get_guild(1063629621528100874)
+    guild = bot.get_guild(969391671982841936)
     category = bot.get_channel(1073832558900547635)
-    # vill = bot.get_guild(969391671982841936)
     admin_role = discord.utils.get(guild.roles, name='Modmail License Certified')
 
     if ctx.author == bot.user:
@@ -339,33 +394,44 @@ async def on_message(ctx):
                 cursor.execute("SELECT channel_id FROM modmail WHERE user_id = (?)", (ctx.author.id, ))
                 channel_id = cursor.fetchone()
                 for id in channel_id:
-                    channel_id = id
-                    break
-                channel = bot.get_channel(channel_id)
+                    channel = bot.get_channel(id)
+                    if channel == None:
+                        cursor.execute("DELETE FROM modmail WHERE channel_id = (?)", (id, ))
+                        db.commit()
+                        print("Removed", id)
+                    else:
+                        cid = id
+                        print(id)
+                        break
+                channel = bot.get_channel(cid)
                 if channel is None:
                     print("CHANNEL NOT FOUND")
                     overwrites = {
                         guild.default_role : discord.PermissionOverwrite(read_messages=False),
                         admin_role : discord.PermissionOverwrite(read_messages=True)
                     }
-                    new_channel = await guild.create_text_channel(f"{ctx.author.name}-modmail", overwrites=overwrites, category=category)
+                    new_channel = await guild.create_text_channel(f"ticket-{ctx.author.name}", overwrites=overwrites, category=category)
 
                     cursor.execute("UPDATE modmail SET channel_id = (?) WHERE user_id = (?)", (new_channel.id, ctx.author.id, ))
                     db.commit()
                     channel = new_channel
                 
                 embed = discord.Embed(title="New Message", color=discord.Color.purple(), timestamp=datetime.now(), description=ctx.content)
-                embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
+                embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
 
                 await channel.send(embed=embed)
                 if ctx.attachments:
                   for x in ctx.attachments:
                     await channel.send(content=x.url)
                   
+                now = str(date.today())
+                cursor.execute("UPDATE modmail SET last_msg = (?) WHERE channel_id = (?)", (now, channel.id, ))
+                db.commit()
+
                 await ctx.add_reaction(emoji='✅')
 
-            except Exception as e:
-                print(e)
+            except:
+                print(traceback.format_exc())
                 await ctx.add_reaction(emoji='❌')
                 
         else:
@@ -375,7 +441,6 @@ async def on_message(ctx):
                 em = discord.Embed(title="Create a ticket?", description="If you want to create a ticket, react with ✅")
                 em.set_footer(text="if you don't want to create a ticket, you can ignore this message.")
                 msg = await ctx.channel.send(embed=em)
-                author = ctx.author
 
                 for emoji in ('✅'): # https://stackoverflow.com/questions/62129427/check-if-a-specific-user-reacted-discord-py
                     await msg.add_reaction(emoji) 
@@ -398,7 +463,7 @@ async def on_message(ctx):
 
                 modmail_channel = await guild.create_text_channel(f"ticket-{ctx.author.name}", overwrites=overwrites, category=category)
 
-                cursor.execute("INSERT INTO modmail VALUES (?, ?)", (ctx.author.id, modmail_channel.id, ))
+                cursor.execute("INSERT INTO modmail VALUES (?, ?, ?)", (ctx.author.id, modmail_channel.id, str(date.today), ))
                 db.commit()
 
                 embed = discord.Embed(
@@ -407,7 +472,7 @@ async def on_message(ctx):
                     timestamp=datetime.now(),
                     description=ctx.content
                 )
-                embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
+                embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
 
                 await modmail_channel.send("<@&1066963647131308092>", embed=embed)
                 if ctx.attachments:
@@ -416,8 +481,8 @@ async def on_message(ctx):
 
                 await ctx.add_reaction(emoji='✅')
 
-            except Exception as e:
-                print(e)
+            except:
+                print(traceback.format_exc())
                 await ctx.add_reaction(emoji='❌')
 
     else:
@@ -441,7 +506,6 @@ async def on_message(ctx):
                 for id in user_id:
                     user_id = id
                     break
-            
                 user = discord.utils.get(bot.get_all_members(), id=user_id) #vill.members
                 if user is None:
                     await ctx.reply("I can't find that user ⚠")
@@ -473,7 +537,7 @@ async def on_message(ctx):
                         await channel.edit(category=archive)
                         return
                     elif ctx.content.startswith("!noembed"): # -------------------- !noembed --------------------
-                      msgcontent = ctx.content.replace("!noembed", f"**From {ctx.author}:**")
+                      msgcontent = ctx.content.replace("!noembed", f"**From {ctx.author.name}:**")
                       await user.send(msgcontent)
                     else:
                         embed = discord.Embed(
@@ -482,13 +546,9 @@ async def on_message(ctx):
                             timestamp=datetime.now(),
                             description=ctx.content
                         )
-                        embed.set_footer(
-                        text=f"Sent by {ctx.author}",
-                        icon_url = ctx.author.avatar.url
-                        )
 
                         embed.set_author(
-                        name=ctx.author,
+                        name=ctx.author.name,
                         icon_url = ctx.author.avatar.url
                         )
                         await user.send(embed=embed)
@@ -496,19 +556,21 @@ async def on_message(ctx):
                         if ctx.attachments:
                           for x in ctx.attachments:
                             await user.send(content=x.url)
-                            
+                      
+
                     await ctx.add_reaction(emoji='✅')
-            except Exception as e:
-                print(e)
+
+            except:
+                print(traceback.format_exc())
                 await ctx.add_reaction(emoji='❌')
             
 # -------------------- /close --------------------
 
-@bot.command(guild_ids=[1063629621528100874], description="(Modmail) Closes a ticket")
+@bot.command(guild_ids=[969391671982841936], description="(Modmail) Closes a ticket")
 @has_role(1066963647131308092)
 async def close(ctx):
   category = bot.get_channel(1073832558900547635)
-  guild = bot.get_guild(1063629621528100874)
+  guild = bot.get_guild(969391671982841936)
   admin_role = discord.utils.get(guild.roles, name='Modmail License Certified')
   if ctx.channel.category == category:
     try:
@@ -548,7 +610,7 @@ async def close(ctx):
       archive = discord.utils.get(ctx.guild.channels, name="archives")
       await channel.edit(category=archive)
     except Exception as e:
-      print(e)
+      print(traceback.format_exc())
       error = str(e)
       if "permissions" in error.lower():
         await ctx.send_response("I'm missing permissions!")
@@ -559,7 +621,7 @@ async def close(ctx):
 
 # -------------------- /noembed --------------------
 
-@bot.command(guild_ids=[1063629621528100874], description="(Modmail) Sends a message in plain text")
+@bot.command(guild_ids=[969391671982841936], description="(Modmail) Sends a message in plain text")
 @has_role(1066963647131308092)
 async def noembed(ctx, message: Option(str, description="The message you would like to send")):
   category = bot.get_channel(1073832558900547635)
@@ -573,10 +635,10 @@ async def noembed(ctx, message: Option(str, description="The message you would l
         break
 
       user = discord.utils.get(bot.get_all_members(), id=user_id)
-      await user.send(f"**From {ctx.author}:** {message}")
+      await user.send(f"**From {ctx.author.name}:** {message}")
       await ctx.send_response(f"{message} \n\n*(sent with no embed)*")
-    except Exception as e:
-      print(e)
+    except:
+      print(traceback.format_exc())
   else:
     await ctx.send_response("This isn't a ticket!")
       
@@ -667,9 +729,10 @@ everyonepings = 0
 
 
 def everyonetimer():
-  time.sleep(10)
   global everyonepings
-  everyonepings = 0
+  while True:
+    time.sleep(10)
+    everyonepings = 0
 
 
 thread = threading.Thread(daemon=True, target=everyonetimer)
@@ -725,3 +788,7 @@ async def everyoneraid(message):
       print("[Antiraid | @everyone] everyonepings:", everyonepings)  
 
 bot.run("OTY1MDg4ODcyMDQyMjI5Nzkw.G9bD_p.KSbzHstt_2sy4mtiOVQYDJpnwxfeE5ypQFRzwU")    
+# OTY1MDg4ODcyMDQyMjI5Nzkw.G9bD_p.KSbzHstt_2sy4mtiOVQYDJpnwxfeE5ypQFRzwU - squido
+while True:
+  schedule.run_pending()
+  time.sleep(60)
