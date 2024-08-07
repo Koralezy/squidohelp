@@ -18,14 +18,18 @@ bot = discord.Bot(intents=discord.Intents.all())
 db = sqlite3.connect('modmail.db')
 cursor = db.cursor()
 
-# cursor.execute("""
-#     CREATE TABLE modmail (
-#       user_id int,
-#       channel_id int,
-#       last_msg text
-#     )
-# """)
-# 
+try:
+  print("Attempting to create database...")
+  cursor.execute("""
+      CREATE TABLE modmail (
+        user_id int,
+        channel_id int,
+        last_msg text
+      )
+  """)
+except:
+  print("Database already made!")
+
 # for adding timeout
 # cursor.execute("""
 #     ALTER TABLE modmail (
