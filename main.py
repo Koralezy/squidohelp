@@ -791,8 +791,8 @@ async def everyoneraid(message):
       everyonepings = everyonepings + 1
       print("[Antiraid | @everyone] everyonepings:", everyonepings)  
 
-bot.run("OTY1MDg4ODcyMDQyMjI5Nzkw.G9bD_p.KSbzHstt_2sy4mtiOVQYDJpnwxfeE5ypQFRzwU")    
-# OTY1MDg4ODcyMDQyMjI5Nzkw.G9bD_p.KSbzHstt_2sy4mtiOVQYDJpnwxfeE5ypQFRzwU - squido
+bot.run("insert token here")    # MUST INSERT TOKEN !!!
+
 while True:
   schedule.run_pending()
   time.sleep(60)
